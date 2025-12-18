@@ -1,0 +1,829 @@
+<!-- Chosen Palette: Royal Scholar (Deep Violet Primary, Amber Accents, Slate Neutral Background) -->
+<!-- Application Structure Plan:
+    1. Header & Context: Clear introduction to the tool as a research instrument for Zi Wei Dou Shu structures.
+    2. Input Interface: Simple form to seed the chart generation.
+    3. The Ming Pan (Central Interactive Grid): The core visualization.
+    4. Analytical Detail Panel: Includes standard static rules AND dynamic Gemini AI integration.
+    5. Quantitative Insights (Data Viz): Radar and Bar charts.
+    6. Gemini Integration: Added "AI Master Annotation" feature in the Detail Panel.
+-->
+<!-- Visualization & Content Choices:
+    1. The Ming Pan: Grid layout.
+    2. Destiny Balance: Radar Chart.
+    3. Star Power: Bar Chart.
+    4. AI Annotation: Dynamic text generation via Gemini API.
+    NO SVG or Mermaid used.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紫微斗数研究实验室 | Zi Wei Dou Shu Research Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Markdown parser for AI responses -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        /* Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        /* Palace Grid Animations */
+        .palace-card {
+            transition: all 0.3s ease;
+        }
+        .palace-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #8b5cf6; /* Violet 500 */
+        }
+        .palace-card.active {
+            border-color: #7c3aed; /* Violet 600 */
+            background-color: #f5f3ff; /* Violet 50 */
+            ring: 2px solid #7c3aed;
+        }
+
+        /* Custom scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* AI Loading Animation */
+        .dot-flashing {
+            position: relative;
+            width: 6px;
+            height: 6px;
+            border-radius: 5px;
+            background-color: #8b5cf6;
+            color: #8b5cf6;
+            animation: dot-flashing 1s infinite linear alternate;
+            animation-delay: 0.5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: "";
+            display: inline-block;
+            position: absolute;
+            top: 0;
+        }
+        .dot-flashing::before {
+            left: -10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 5px;
+            background-color: #8b5cf6;
+            color: #8b5cf6;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 5px;
+            background-color: #8b5cf6;
+            color: #8b5cf6;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 1s;
+        }
+        @keyframes dot-flashing {
+            0% { background-color: #8b5cf6; }
+            50%, 100% { background-color: #ddd6fe; }
+        }
+
+        /* Markdown Styles for AI Response */
+        .prose p { margin-bottom: 0.5em; font-size: 0.9rem; line-height: 1.6; }
+        .prose strong { color: #6d28d9; font-weight: 600; }
+        .prose ul { list-style-type: disc; padding-left: 1.2em; margin-bottom: 0.5em; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-violet-700 rounded-full flex items-center justify-center text-white font-bold serif">紫</div>
+                <h1 class="text-xl font-bold text-slate-800 tracking-wide">紫微斗数 <span class="text-violet-600">研究实验室</span></h1>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-600">
+                <a href="#" class="hover:text-violet-600 transition-colors">命盘解析</a>
+                <a href="#" class="hover:text-violet-600 transition-colors">数据分析</a>
+                <a href="#" class="hover:text-violet-600 transition-colors">星曜百科</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- Introduction Section -->
+        <section class="max-w-3xl mx-auto text-center space-y-4">
+            <h2 class="text-3xl font-bold text-slate-900 serif">探索命运的结构</h2>
+            <p class="text-slate-600 leading-relaxed">
+                本应用通过 Gemini AI 与经典算法结合，为您解析古老的紫微斗数系统。输入您的生辰信息，即可生成模拟命盘，并获取 AI 大师的实时批注。
+                <br>
+                <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">注：本系统用于学术研究与结构展示，排盘算法为演示性质简化版。</span>
+            </p>
+        </section>
+
+        <!-- Input Section -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700">姓名</label>
+                    <input type="text" id="inputName" placeholder="请输入姓名/代号" class="w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm px-4 py-2 border">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700">出生日期 (公历)</label>
+                    <input type="date" id="inputDate" class="w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm px-4 py-2 border">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700">出生时辰</label>
+                    <select id="inputTime" class="w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm px-4 py-2 border">
+                        <option value="0">子时 (23:00-01:00)</option>
+                        <option value="1">丑时 (01:00-03:00)</option>
+                        <option value="2">寅时 (03:00-05:00)</option>
+                        <option value="3">卯时 (05:00-07:00)</option>
+                        <option value="4">辰时 (07:00-09:00)</option>
+                        <option value="5">巳时 (09:00-11:00)</option>
+                        <option value="6">午时 (11:00-13:00)</option>
+                        <option value="7">未时 (13:00-15:00)</option>
+                        <option value="8">申时 (15:00-17:00)</option>
+                        <option value="9">酉时 (17:00-19:00)</option>
+                        <option value="10">戌时 (19:00-21:00)</option>
+                        <option value="11">亥时 (21:00-23:00)</option>
+                    </select>
+                </div>
+                <button id="generateBtn" class="w-full bg-violet-600 text-white font-medium py-2 px-4 rounded-md hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors shadow-md flex items-center justify-center gap-2">
+                    <span>生成命盘</span>
+                    <span class="text-xl">✦</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Dashboard (Hidden initially) -->
+        <div id="dashboard" class="hidden space-y-8 animate-fade-in">
+            
+            <!-- Dashboard Intro -->
+            <div class="border-l-4 border-violet-500 pl-4 py-1 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">命盘结构与详解</h3>
+                    <p class="text-sm text-slate-500">点击下方的十二宫位，查看 AI 大师的详细解析。</p>
+                </div>
+            </div>
+
+            <!-- Ming Pan Layout & Detail View -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- The 12 Palace Grid (Takes up 2 cols) -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div id="mingPanGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <!-- Generated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Inspector Panel (Takes up 1 col) -->
+                <div class="lg:col-span-1">
+                    <div id="detailPanel" class="bg-white rounded-xl shadow-lg border border-violet-100 h-full flex flex-col overflow-hidden sticky top-24 min-h-[500px]">
+                        <div class="bg-violet-50 p-4 border-b border-violet-100 flex justify-between items-center">
+                            <h3 id="panelTitle" class="font-bold text-violet-900 text-lg serif">宫位详情</h3>
+                            <span id="panelBranch" class="text-xs font-mono text-violet-400 bg-white px-2 py-1 rounded border border-violet-100">请选择宫位</span>
+                        </div>
+                        <div class="p-6 flex-1 overflow-y-auto custom-scroll space-y-6">
+                            
+                            <!-- Dynamic Content Area -->
+                            <div id="panelContent" class="space-y-4">
+                                <p class="text-slate-400 text-center italic py-10">点击左侧命盘中的任意宫位<br>查看该宫位的星曜组合与解析</p>
+                            </div>
+
+                            <!-- AI Feature Area -->
+                            <div id="aiSection" class="hidden border-t border-slate-100 pt-4 mt-4">
+                                <div class="bg-gradient-to-r from-violet-50 to-indigo-50 rounded-lg p-4 border border-violet-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="text-sm font-bold text-violet-800 flex items-center gap-1">
+                                            <span>✨ AI 大师批注</span>
+                                        </h4>
+                                        <button id="askAiBtn" class="text-xs bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 rounded-full transition-all shadow-sm flex items-center gap-1">
+                                            <span>深度解析</span>
+                                            <span class="text-xs opacity-70">Gemini</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- AI Output Container -->
+                                    <div id="aiOutput" class="text-sm text-slate-700 leading-relaxed min-h-[60px] prose prose-violet hidden">
+                                        <!-- Content goes here -->
+                                    </div>
+                                    
+                                    <!-- Loading State -->
+                                    <div id="aiLoading" class="hidden py-4 flex justify-center items-center gap-3">
+                                        <div class="dot-flashing"></div>
+                                        <span class="text-xs text-violet-400">大师正在推演中...</span>
+                                    </div>
+
+                                    <!-- Error State -->
+                                    <div id="aiError" class="hidden text-xs text-rose-500 mt-2">
+                                        推演失败，请稍后重试。
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contextual Stats -->
+                            <div id="panelStats" class="hidden pt-4 border-t border-slate-100">
+                                <h4 class="text-xs uppercase tracking-wider text-slate-500 font-bold mb-3">能量指数</h4>
+                                <div class="space-y-3">
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1">
+                                            <span class="text-slate-600">吉星影响力</span>
+                                            <span class="font-bold text-emerald-600" id="luckyScore">0%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                            <div id="luckyBar" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1">
+                                            <span class="text-slate-600">煞星影响力</span>
+                                            <span class="font-bold text-rose-600" id="unluckyScore">0%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                            <div id="unluckyBar" class="bg-rose-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200">
+                
+                <!-- Chart 1: Life Balance Radar -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1 h-5 bg-amber-500 rounded-full block"></span>
+                            人生五维均衡图
+                        </h3>
+                        <p class="text-sm text-slate-500 mt-1">综合分析命宫、财帛、官禄、迁移、福德等关键宫位数据。</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <div class="mt-4 bg-amber-50 p-3 rounded text-xs text-amber-800 leading-relaxed">
+                        <strong>分析逻辑：</strong> 此图表将复杂的星曜亮度（庙旺利陷）转化为数值，为您直观展示在事业、财富、情感、健康及人际方面的先天势能分布。
+                    </div>
+                </div>
+
+                <!-- Chart 2: Major Star Power Bar -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-1 h-5 bg-indigo-500 rounded-full block"></span>
+                            主星能量分布
+                        </h3>
+                        <p class="text-sm text-slate-500 mt-1">当前命盘中关键主星的能量强度（庙旺状态）。</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                     <div class="mt-4 bg-indigo-50 p-3 rounded text-xs text-indigo-800 leading-relaxed">
+                        <strong>数据说明：</strong> 柱状高度代表星曜的"亮度"。亮度越高（如庙、旺），该星曜的正面特质越容易发挥；亮度越低（如落陷），则可能面临更多挑战。
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="text-center text-slate-400 text-sm py-8 border-t border-slate-200">
+            <p>&copy; 2025 紫微斗数研究实验室 | Interactive Research Dashboard with Gemini AI</p>
+        </footer>
+
+    </main>
+
+    <!-- Application Logic -->
+    <script>
+        // --- API & CONFIG ---
+        const apiKey = ""; // Set at runtime
+        
+        // --- DATA CONSTANTS ---
+
+        const PALACES = [
+            "命宫 (Life)", "兄弟 (Siblings)", "夫妻 (Spouse)", "子女 (Children)", 
+            "财帛 (Wealth)", "疾厄 (Health)", "迁移 (Travel)", "交友 (Friends)", 
+            "官禄 (Career)", "田宅 (Property)", "福德 (Mental)", "父母 (Parents)"
+        ];
+
+        const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+
+        const STARS_DB = {
+            "紫微": { name: "紫微", type: "North", desc: "帝王之星，尊贵威严，主掌官禄。在命宫代表有领导才能，但也可能孤独。", keywords: ["尊贵", "领导", "孤独"] },
+            "天机": { name: "天机", type: "South", desc: "智慧之星，机谋多变，主掌智慧。反应敏捷，擅长策划，但容易多虑。", keywords: ["智慧", "变动", "思考"] },
+            "太阳": { name: "太阳", type: "South", desc: "权贵之星，光明磊落，主掌博爱。乐于助人，劳心劳力，注重名声。", keywords: ["博爱", "付出", "名声"] },
+            "武曲": { name: "武曲", type: "North", desc: "财帛之星，刚毅果决，主掌财富。执行力强，略显孤僻，重利。", keywords: ["财富", "执行", "刚直"] },
+            "天同": { name: "天同", type: "South", desc: "福德之星，温和乐天，主掌享乐。知足常乐，但这可能导致缺乏进取心。", keywords: ["享乐", "温和", "懒散"] },
+            "廉贞": { name: "廉贞", type: "North", desc: "囚星，次桃花，主掌交际。爱憎分明，由于性格复杂，变化极大。", keywords: ["交际", "执着", "多变"] },
+            "天府": { name: "天府", type: "South", desc: "财库之星，稳重宽厚，主掌财库。善于守成，包容力强，也代表房产。", keywords: ["守成", "包容", "财库"] },
+            "太阴": { name: "太阴", type: "North", desc: "财星，温柔细腻，主掌清洁。重情感，有洁癖，适合由于内务与策划。", keywords: ["阴柔", "财富", "细腻"] },
+            "贪狼": { name: "贪狼", type: "North", desc: "桃花之星，多才多艺，主掌欲望。善于交际，野心勃勃，学习能力强。", keywords: ["欲望", "才艺", "交际"] },
+            "巨门": { name: "巨门", type: "North", desc: "暗星，口才极佳，主掌是非。心思缜密，多疑，适合以口为业。", keywords: ["口才", "是非", "研究"] },
+            "天相": { name: "天相", type: "South", desc: "印星，忠诚公正，主掌辅助。注重外表，耳根软，适合作为副手或幕僚。", keywords: ["辅助", "公正", "形象"] },
+            "天梁": { name: "天梁", type: "South", desc: "荫星，老成持重，主掌寿考。乐于助人，有长者风范，逢凶化吉。", keywords: ["庇荫", "长寿", "原则"] },
+            "七杀": { name: "七杀", type: "South", desc: "将星，刚烈冲动，主掌肃杀。勇往直前，喜怒无常，人生波动较大。", keywords: ["冲劲", "变动", "孤克"] },
+            "破军": { name: "破军", type: "North", desc: "耗星，先破后立，主掌破坏。极具开创性，不按常理出牌，消耗大。", keywords: ["开创", "破坏", "消耗"] }
+        };
+
+        const BRIGHTNESS = ["庙", "旺", "得", "利", "平", "陷"];
+        // Numerical value for analysis
+        const BRIGHTNESS_VALUE = { "庙": 5, "旺": 4, "得": 3, "利": 2, "平": 1, "陷": 0 };
+
+        // --- STATE MANAGEMENT ---
+        let currentChart = [];
+        let radarInstance = null;
+        let barInstance = null;
+        let currentSelectedPalace = null; // To store data for AI call
+
+        // --- CORE FUNCTIONS ---
+
+        function generateChartData(seed) {
+            const data = [];
+            const majorStars = Object.keys(STARS_DB);
+            
+            const lifePalaceIndex = seed % 12;
+            
+            for (let i = 0; i < 12; i++) {
+                const branch = BRANCHES[i];
+                let palaceIndex = (i - lifePalaceIndex + 12) % 12;
+                const palaceName = PALACES[palaceIndex];
+
+                const stars = [];
+                const numStars = (seed + i * 7) % 3; 
+                
+                if (numStars > 0) {
+                    let starIdx = (seed + i * 3) % majorStars.length;
+                    stars.push({
+                        key: majorStars[starIdx],
+                        brightness: BRIGHTNESS[(seed + i + starIdx) % 6]
+                    });
+                    
+                    if (numStars > 1) {
+                        let starIdx2 = (starIdx + 4) % majorStars.length;
+                        stars.push({
+                            key: majorStars[starIdx2],
+                            brightness: BRIGHTNESS[(seed + i + starIdx2) % 6]
+                        }); 
+                    }
+                }
+
+                const aux = [];
+                if ((seed + i) % 4 === 0) aux.push("左辅");
+                if ((seed + i) % 5 === 0) aux.push("右弼");
+                if ((seed + i) % 6 === 0) aux.push("文昌");
+                if ((seed + i) % 7 === 0) aux.push("文曲");
+                if ((seed + i) % 8 === 0) aux.push("擎羊"); 
+                if ((seed + i) % 9 === 0) aux.push("陀罗");
+                if ((seed + i) % 10 === 0) aux.push("火星");
+
+                data.push({
+                    gridIndex: i,
+                    branch: branch,
+                    palace: palaceName,
+                    stars: stars,
+                    aux: aux
+                });
+            }
+            return data;
+        }
+
+        function renderGrid(data) {
+            const gridEl = document.getElementById('mingPanGrid');
+            gridEl.innerHTML = '';
+
+            data.forEach((cell, index) => {
+                const cellEl = document.createElement('div');
+                cellEl.className = `palace-card bg-slate-50 border border-slate-200 rounded-lg p-3 cursor-pointer min-h-[120px] flex flex-col justify-between relative select-none`;
+                cellEl.dataset.index = index;
+                cellEl.onclick = () => selectPalace(index);
+
+                // Branch Label (Bottom Right)
+                const branchLabel = document.createElement('div');
+                branchLabel.className = 'absolute bottom-2 right-2 text-slate-200 text-4xl font-serif font-bold pointer-events-none z-0';
+                branchLabel.innerText = cell.branch;
+
+                // Palace Label (Top Center or Left)
+                const palaceLabel = document.createElement('div');
+                // Highlight Life Palace
+                const isLife = cell.palace.includes("命宫");
+                const palaceColor = isLife ? 'bg-violet-600 text-white shadow-md' : 'bg-slate-200 text-slate-600';
+                
+                palaceLabel.className = `z-10 self-start text-xs font-bold px-2 py-1 rounded ${palaceColor} mb-2`;
+                palaceLabel.innerText = cell.palace.split(" ")[0]; 
+
+                // Stars Container
+                const starsContainer = document.createElement('div');
+                starsContainer.className = 'z-10 flex flex-col gap-1';
+
+                cell.stars.forEach(star => {
+                    const starRow = document.createElement('div');
+                    starRow.className = 'flex items-center justify-between text-sm';
+                    
+                    // Color code brightness
+                    let brightColor = 'text-slate-400';
+                    if (['庙', '旺'].includes(star.brightness)) brightColor = 'text-red-500 font-bold';
+                    else if (['平', '陷'].includes(star.brightness)) brightColor = 'text-slate-400';
+                    else brightColor = 'text-slate-600';
+
+                    starRow.innerHTML = `
+                        <span class="font-bold text-violet-900">${star.key}</span>
+                        <span class="text-xs ${brightColor} scale-90 origin-right">[${star.brightness}]</span>
+                    `;
+                    starsContainer.appendChild(starRow);
+                });
+
+                if (cell.aux.length > 0) {
+                    const auxRow = document.createElement('div');
+                    auxRow.className = 'flex flex-wrap gap-1 mt-2 z-10';
+                    cell.aux.forEach(a => {
+                        const isBad = ["擎羊", "陀罗", "火星"].includes(a);
+                        auxRow.innerHTML += `<span class="text-[10px] px-1 rounded ${isBad ? 'bg-rose-100 text-rose-700' : 'bg-indigo-50 text-indigo-600'}">${a}</span>`;
+                    });
+                    starsContainer.appendChild(auxRow);
+                }
+
+                cellEl.appendChild(branchLabel);
+                cellEl.appendChild(palaceLabel);
+                cellEl.appendChild(starsContainer);
+                gridEl.appendChild(cellEl);
+            });
+        }
+
+        function selectPalace(index) {
+            currentSelectedPalace = currentChart[index];
+
+            // UI Update
+            document.querySelectorAll('.palace-card').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.palace-card[data-index="${index}"]`).classList.add('active');
+
+            const data = currentChart[index];
+            const content = document.getElementById('panelContent');
+            const title = document.getElementById('panelTitle');
+            const branch = document.getElementById('panelBranch');
+            const stats = document.getElementById('panelStats');
+            
+            // AI UI Reset
+            document.getElementById('aiSection').classList.remove('hidden');
+            document.getElementById('aiOutput').classList.add('hidden');
+            document.getElementById('aiOutput').innerHTML = '';
+            document.getElementById('aiLoading').classList.add('hidden');
+            document.getElementById('aiError').classList.add('hidden');
+            document.getElementById('askAiBtn').classList.remove('hidden');
+            document.getElementById('askAiBtn').disabled = false;
+            document.getElementById('askAiBtn').innerHTML = '<span>深度解析</span><span class="text-xs opacity-70">Gemini</span>';
+
+            // Header Update
+            title.innerText = data.palace.split(" ")[0] + " 详解";
+            branch.innerText = `地支: ${data.branch}`;
+
+            // Content Generation
+            let html = '';
+            
+            // Major Stars Logic
+            if (data.stars.length === 0) {
+                html += `<div class="p-4 bg-slate-50 rounded text-slate-500 text-sm">
+                    <strong>无主星 (空宫)：</strong><br>
+                    此宫位没有主星坐守，通常借对宫（${PALACES[(index + 6) % 12].split(" ")[0]}）的星曜来参考。这意味着该领域的运势变动较大，容易受环境影响。
+                </div>`;
+            } else {
+                data.stars.forEach(star => {
+                    const info = STARS_DB[star.key];
+                    html += `
+                        <div class="mb-4 group">
+                            <div class="flex items-baseline gap-2 mb-1">
+                                <h4 class="font-bold text-violet-800 text-lg">${star.key}</h4>
+                                <span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700">${star.brightness}</span>
+                                <span class="text-xs text-slate-400">${info.type}</span>
+                            </div>
+                            <p class="text-sm text-slate-600 leading-relaxed mb-2">${info.desc}</p>
+                            <div class="flex gap-2">
+                                ${info.keywords.map(k => `<span class="text-xs border border-slate-200 text-slate-500 px-2 py-0.5 rounded-full">${k}</span>`).join('')}
+                            </div>
+                        </div>
+                        <hr class="border-slate-100 my-4 last:hidden">
+                    `;
+                });
+            }
+
+            // Aux Stars logic
+            if (data.aux.length > 0) {
+                html += `<div class="mt-4">
+                    <h5 class="text-xs font-bold text-slate-500 uppercase mb-2">辅曜与杂曜</h5>
+                    <div class="flex flex-wrap gap-2">
+                        ${data.aux.map(a => `<span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded">${a}</span>`).join('')}
+                    </div>
+                </div>`;
+            }
+
+            // Standard "Research Note"
+            html += `<div class="mt-6 bg-amber-50 p-3 rounded border border-amber-100">
+                <h5 class="text-amber-800 text-sm font-bold mb-1">☴ 基础推断</h5>
+                <p class="text-amber-700 text-xs leading-relaxed">
+                    ${getAdvice(data.palace, data.stars)}
+                </p>
+            </div>`;
+
+            content.innerHTML = html;
+            
+            // Show Stats
+            stats.classList.remove('hidden');
+            calculateCellStats(data);
+        }
+
+        function getAdvice(palaceName, stars) {
+            const p = palaceName.split(" ")[0];
+            const hasStars = stars.length > 0;
+            const starNames = stars.map(s => s.key).join("、");
+
+            if (p === "命宫") return hasStars ? `命宫主星为${starNames}。这是性格的核心。关注这些星曜的特质，它们决定了您的主要行事风格与天赋所在。` : "命无正曜，宜外出发展，或借对宫迁移宫之星曜为用。性格可塑性强。";
+            if (p === "财帛") return hasStars ? `财源受${starNames}影响。分析这些星的五行属性，可判断适合从事的求财方式。` : "财运波动，不宜投机。";
+            if (p === "官禄") return `事业宫位。${hasStars ? starNames + "在此" : "空宫"}。结合命宫来看，决定了职业方向与职场表现。`;
+            if (p === "夫妻") return "观察情感模式与配偶特质。切勿仅凭星曜名字断吉凶。";
+            return `该宫位代表${p}相关的运势。结合三方四正（与其形成三角关系的宫位）进行综合判断。`;
+        }
+
+        function calculateCellStats(data) {
+            let goodPoints = 0;
+            let badPoints = 0;
+            let total = 0;
+
+            data.stars.forEach(s => {
+                const bVal = BRIGHTNESS_VALUE[s.brightness];
+                total += 5; 
+                goodPoints += bVal; 
+                if (bVal < 2) badPoints += (2 - bVal) * 2;
+            });
+
+            data.aux.forEach(a => {
+                if (["擎羊", "陀罗", "火星"].includes(a)) badPoints += 5;
+                else goodPoints += 2;
+                total += 2;
+            });
+
+            if (total === 0) total = 5; 
+
+            const luckyPct = Math.min(100, Math.round((goodPoints / total) * 100));
+            const unluckyPct = Math.min(100, Math.round((badPoints / 10) * 100)); 
+
+            document.getElementById('luckyScore').innerText = `${luckyPct}%`;
+            document.getElementById('luckyBar').style.width = `${luckyPct}%`;
+            document.getElementById('unluckyScore').innerText = `${unluckyPct}%`;
+            document.getElementById('unluckyBar').style.width = `${unluckyPct}%`;
+        }
+
+        // --- GEMINI AI INTEGRATION ---
+
+        async function callGemini(palaceData) {
+            const btn = document.getElementById('askAiBtn');
+            const output = document.getElementById('aiOutput');
+            const loading = document.getElementById('aiLoading');
+            const error = document.getElementById('aiError');
+
+            // UI State: Loading
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            output.classList.add('hidden');
+            error.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            // Construct Prompt
+            const starText = palaceData.stars.map(s => `${s.key}(${s.brightness})`).join("、") || "无主星";
+            const auxText = palaceData.aux.join("、") || "无";
+            
+            const prompt = `你是一位精通紫微斗数的玄学大师。请根据以下信息，用带有古典韵味但通俗易懂的语言，为求测者解析该宫位的运势。
+            
+            【宫位信息】
+            宫位：${palaceData.palace}
+            地支：${palaceData.branch}
+            主星：${starText}
+            辅曜：${auxText}
+
+            请提供一段约150字左右的精辟分析，重点说明吉凶趋势，并最后给出一句简短的“大师锦囊”作为生活建议。请使用Markdown格式，可以使用加粗强调重点。`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Request Failed');
+
+                const result = await response.json();
+                const text = result.candidates[0].content.parts[0].text;
+
+                // UI State: Success
+                loading.classList.add('hidden');
+                output.innerHTML = marked.parse(text); // Render Markdown
+                output.classList.remove('hidden');
+                btn.innerHTML = '<span>已生成</span><span class="text-xs">✔</span>';
+                
+            } catch (err) {
+                console.error(err);
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.innerHTML = '<span>重试</span>';
+            }
+        }
+
+        document.getElementById('askAiBtn').addEventListener('click', () => {
+            if (currentSelectedPalace) {
+                callGemini(currentSelectedPalace);
+            }
+        });
+
+
+        // --- CHARTS & INIT ---
+
+        function renderCharts() {
+            const getPalaceScore = (name) => {
+                const cell = currentChart.find(c => c.palace.includes(name));
+                if (!cell) return 0;
+                let score = 0;
+                cell.stars.forEach(s => score += BRIGHTNESS_VALUE[s.brightness]);
+                score += cell.aux.filter(a => !["擎羊", "陀罗", "火星"].includes(a)).length;
+                return score;
+            };
+
+            const radarData = [
+                getPalaceScore("财帛"),
+                getPalaceScore("官禄"),
+                getPalaceScore("福德"),
+                getPalaceScore("交友"),
+                getPalaceScore("疾厄")
+            ];
+
+            const ctxRadar = document.getElementById('radarChart').getContext('2d');
+            if (radarInstance) radarInstance.destroy();
+            
+            radarInstance = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['财富 (Wealth)', '事业 (Career)', '福德 (Mental)', '人际 (Social)', '健康 (Health)'],
+                    datasets: [{
+                        label: '先天势能 (Potential)',
+                        data: radarData,
+                        fill: true,
+                        backgroundColor: 'rgba(124, 58, 237, 0.2)', 
+                        borderColor: 'rgb(124, 58, 237)',
+                        pointBackgroundColor: 'rgb(124, 58, 237)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(124, 58, 237)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e2e8f0' },
+                            grid: { color: '#e2e8f0' },
+                            pointLabels: {
+                                font: { size: 12, family: "'Noto Sans SC', sans-serif" },
+                                color: '#64748b'
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 10
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const activeStars = [];
+            currentChart.forEach(cell => {
+                cell.stars.forEach(s => {
+                    activeStars.push({ name: s.key, val: BRIGHTNESS_VALUE[s.brightness] });
+                });
+            });
+            activeStars.sort((a, b) => b.val - a.val);
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            if (barInstance) barInstance.destroy();
+
+            barInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: activeStars.map(s => s.name),
+                    datasets: [{
+                        label: '亮度等级',
+                        data: activeStars.map(s => s.val),
+                        backgroundColor: activeStars.map(s => {
+                            if (s.val >= 4) return 'rgba(239, 68, 68, 0.7)'; 
+                            if (s.val >= 2) return 'rgba(245, 158, 11, 0.7)'; 
+                            return 'rgba(148, 163, 184, 0.7)'; 
+                        }),
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { callback: function(value) { return {0:'陷', 1:'平', 2:'利', 3:'得', 4:'旺', 5:'庙'}[value] || ''; } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return `状态: ${{0:'陷', 1:'平', 2:'利', 3:'得', 4:'旺', 5:'庙'}[context.raw]} (${context.raw})`; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const dateStr = document.getElementById('inputDate').value;
+            const timeVal = parseInt(document.getElementById('inputTime').value);
+
+            if (!dateStr) {
+                alert("请选择出生日期");
+                return;
+            }
+
+            const dateObj = new Date(dateStr);
+            const seed = dateObj.getFullYear() + dateObj.getMonth() + dateObj.getDate() + timeVal;
+            currentChart = generateChartData(seed);
+
+            document.getElementById('dashboard').classList.remove('hidden');
+            renderGrid(currentChart);
+            
+            const lifePalaceIdx = currentChart.findIndex(c => c.palace.includes("命宫"));
+            selectPalace(lifePalaceIdx !== -1 ? lifePalaceIdx : 0);
+            renderCharts();
+            document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        document.getElementById('inputDate').valueAsDate = new Date();
+
+    </script>
+</body>
+</html>
